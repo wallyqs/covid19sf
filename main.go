@@ -21,7 +21,7 @@ const (
 
 const (
 	version     = "0.1.0"
-	releaseDate = "April 10th, 2020"
+	releaseDate = "April 11th, 2020"
 )
 
 type SanFranciscoTPRData struct {
