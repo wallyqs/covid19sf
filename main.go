@@ -17,7 +17,6 @@ const (
 	// dataSFCasesURL is the endpoint from where can get the stats
 	// about the cases in San Francisco.
 	dataSFCasesURL = "https://data.sfgov.org/resource/tvq9-ec9w.json"
-	
 )
 
 const (
@@ -25,7 +24,7 @@ const (
 	releaseDate = "April 10th, 2020"
 )
 
-type SanFranciscoData struct {
+type SanFranciscoTPRData struct {
 	// TestPositivityRate
 	TestPositivityRate string `json:"pct"`
 
@@ -39,26 +38,53 @@ type SanFranciscoData struct {
 	Tests string `json:"tests"`
 }
 
-func
+type SanFranciscoCasesData struct {
+	Date                 string `json:"date"`
+	TransmissionCategory string `json:"transmission_category"`
+	CaseDisposition      string `json:"case_disposition"`
+	CaseCount            string `json:"case_count"`
+}
 
-func main() {
-	resp, err := http.Get(dataSFURL)
+func curl(endpoint string) ([]byte, error) {
+	resp, err := http.Get(endpoint)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
+	defer resp.Body.Close()
+
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func main() {
+	data, err := curl(dataSFURL)
+	if err != nil {
 		log.Fatal(err)
 	}
-	resp.Body.Close()
 
-	var recentData []*SanFranciscoData
+	var recentData []*SanFranciscoTPRData
 	err = json.Unmarshal(data, &recentData)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	if len(recentData) < 1 {
+		log.Fatal("No data!")
+	}
+
+	var casesData []*SanFranciscoCasesData
+	data, err = curl(dataSFCasesURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = json.Unmarshal(data, &casesData)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if len(casesData) < 1 {
 		log.Fatal("No data!")
 	}
 
@@ -78,13 +104,33 @@ func main() {
 	}
 	neg := tests - pos
 
-	fmt.Printf("|----------------------|-----------------|-----------------|----------------------|\n")
-	fmt.Printf("| City                 | Positive  Cases | Negative Cases  | Test Positivity Rate |\n")
-	fmt.Printf("|----------------------|-----------------|-----------------|----------------------|\n")
-	fmt.Printf("| San Francisco        | %-15d | %-15d | %-20.4f |\n",
+	// Cases data
+	totalDeaths := 0
+	totalPositive := 0
+	for _, cs := range casesData {
+		if cs.CaseDisposition == "Death" {
+			n, err := strconv.Atoi(cs.CaseCount)
+			if err != nil {
+				log.Fatal(err)
+			}
+			totalDeaths += n
+		} else if cs.CaseDisposition == "Confirmed" {
+			n, err := strconv.Atoi(cs.CaseCount)
+			if err != nil {
+				log.Fatal(err)
+			}
+			totalPositive += n
+		}
+	}
+	fmt.Printf("|----------------------|-----------------------|-----------------------|----------------------|----------------|----------------|\n")
+	fmt.Printf("| City                 | Positive Cases Today  | Negative Cases Today  | Test Positivity Rate | Total Positive | Total Deaths   |\n")
+	fmt.Printf("|----------------------|-----------------------|-----------------------|----------------------|----------------|----------------|\n")
+	fmt.Printf("| San Francisco        | %-21d | %-21d | %-20.4f | %-14d | %-14d |\n",
 		pos,
 		neg,
 		tpr,
+		totalPositive,
+		totalDeaths,
 	)
-	fmt.Printf("|----------------------|-----------------|-----------------|----------------------|\n")
+	fmt.Printf("|----------------------|-----------------------|-----------------------|----------------------|----------------|----------------|\n")
 }
