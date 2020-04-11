@@ -123,7 +123,7 @@ func main() {
 		}
 	}
 	fmt.Printf("|----------------------|-----------------------|-----------------------|----------------------|----------------|----------------|\n")
-	fmt.Printf("| City                 | Positive Cases Today  | Negative Cases Today  | Test Positivity Rate | Total Positive | Total Deaths   |\n")
+	fmt.Printf("| City                 | Positive (Past 24hrs) | Negative (Past 24hrs) | Test Positivity Rate | Total Positive | Total Deaths   |\n")
 	fmt.Printf("|----------------------|-----------------------|-----------------------|----------------------|----------------|----------------|\n")
 	fmt.Printf("| San Francisco        | %-21d | %-21d | %-20.4f | %-14d | %-14d |\n",
 		pos,
